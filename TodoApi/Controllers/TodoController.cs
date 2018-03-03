@@ -62,10 +62,39 @@ namespace TodoApi.Controllers
         [HttpPut("{id}")]
         public IActionResult Update(long id, [FromBody] TodoItem item)
         {
+            // According to HTTP spec, a HTTP PUT request requires the client to send the entire updated entity, not just the deltas
+            // To support partial updates, use HTTP PATCH
+
             if (item == null || item.Id != id)
                 return BadRequest();
 
+            var todo = context.TodoItems.FirstOrDefault(t => t.Id == id);
 
+            if (todo == null)
+                return NotFound();
+
+            todo.IsComplete = item.IsComplete;
+            todo.Title = item.Title;
+
+            context.TodoItems.Update(todo);
+            context.SaveChanges();
+
+            // Status Code: 200 No Content - standard for HTTP PUT requests
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        public IActionResult Delete(long id)
+        {
+            var todo = context.TodoItems.FirstOrDefault(t => t.Id == id);
+
+            if (todo == null)
+                return NotFound();
+
+            context.TodoItems.Remove(todo);
+            context.SaveChanges();
+
+            return NoContent();
         }
 
     }
